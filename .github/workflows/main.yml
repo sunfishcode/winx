@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  rustfmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - uses: ./.github/actions/install-rust
+      with:
+        toolchain: stable
+    - run: cargo fmt --all -- --check
+
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [windows, windows-2016]
+        include:
+          - build: windows
+            os: windows-latest
+            rust: stable
+          - build: windows-2016
+            os: windows-2016
+            rust: stable
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - uses: ./.github/actions/install-rust
+      with:
+        toolchain: ${{ matrix.rust }}
+
+    - name: Native testing
+      run: cargo test
+      env:
+        RUST_BACKTRACE: 1
+
+  test_nightly:
+    name: Test with Rust nightly
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [windows]
+        include:
+          - build: windows
+            os: windows-latest
+            rust: nightly
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - uses: ./.github/actions/install-rust
+      with:
+        toolchain: ${{ matrix.rust }}
+    - run: cargo test
