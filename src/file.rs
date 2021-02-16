@@ -1,24 +1,24 @@
 #![allow(non_camel_case_types)]
 
+use crate::cvt::cvt;
 use crate::ntdll::{
     NtQueryInformationFile, RtlNtStatusToDosError, FILE_ACCESS_INFORMATION, FILE_INFORMATION_CLASS,
     FILE_MODE_INFORMATION, IO_STATUS_BLOCK,
 };
 use bitflags::bitflags;
-use cvt::cvt;
 use std::ffi::{c_void, OsString};
 use std::fs::File;
-use std::io::{Error, Result};
+use std::io;
 use std::os::windows::prelude::{AsRawHandle, OsStringExt, RawHandle};
 use winapi::shared::{
     minwindef::{self, DWORD},
     ntstatus, winerror,
 };
-use winapi::um::{fileapi, fileapi::GetFileType, minwinbase, winbase, winnt};
+use winapi::um::{fileapi, fileapi::GetFileType, winbase, winnt};
 
 /// Maximum total path length for Unicode in Windows.
 /// [Maximum path length limitation]: https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file#maximum-path-length-limitation
-pub const WIDE_MAX_PATH: DWORD = 0x7fff;
+const WIDE_MAX_PATH: DWORD = 0x7fff;
 
 #[derive(Debug, Copy, Clone)]
 pub struct FileType(minwindef::DWORD);
@@ -54,9 +54,9 @@ impl FileType {
     }
 }
 
-pub unsafe fn get_file_type(handle: RawHandle) -> Result<FileType> {
+pub unsafe fn get_file_type(handle: RawHandle) -> io::Result<FileType> {
     let file_type = FileType(GetFileType(handle));
-    let err = Error::last_os_error();
+    let err = io::Error::last_os_error();
     if file_type.is_unknown() && err.raw_os_error().unwrap() as u32 != winerror::ERROR_SUCCESS {
         Err(err)
     } else {
@@ -333,7 +333,7 @@ bitflags! {
     }
 }
 
-pub fn get_file_path(file: &File) -> Result<OsString> {
+pub fn get_file_path(file: &File) -> io::Result<OsString> {
     use winapi::um::fileapi::GetFinalPathNameByHandleW;
 
     let mut raw_path: Vec<u16> = vec![0; WIDE_MAX_PATH as usize];
@@ -346,14 +346,14 @@ pub fn get_file_path(file: &File) -> Result<OsString> {
     // (practically probably impossible)
     let written_bytes = raw_path
         .get(..read_len as usize)
-        .ok_or(Error::from_raw_os_error(
+        .ok_or(io::Error::from_raw_os_error(
             winerror::ERROR_BUFFER_OVERFLOW as i32,
         ))?;
 
     Ok(OsString::from_wide(written_bytes))
 }
 
-pub fn get_fileinfo(file: &File) -> Result<fileapi::BY_HANDLE_FILE_INFORMATION> {
+pub fn get_fileinfo(file: &File) -> io::Result<fileapi::BY_HANDLE_FILE_INFORMATION> {
     use fileapi::{GetFileInformationByHandle, BY_HANDLE_FILE_INFORMATION};
     use std::mem;
 
@@ -367,29 +367,7 @@ pub fn get_fileinfo(file: &File) -> Result<fileapi::BY_HANDLE_FILE_INFORMATION> 
     Ok(info)
 }
 
-pub fn change_time(file: &File) -> Result<i64> {
-    use fileapi::FILE_BASIC_INFO;
-    use minwinbase::FileBasicInfo;
-    use std::mem;
-    use winbase::GetFileInformationByHandleEx;
-
-    let handle = file.as_raw_handle();
-    let tm = unsafe {
-        let mut info: FILE_BASIC_INFO = mem::zeroed();
-        let infosize = mem::size_of_val(&info);
-        cvt(GetFileInformationByHandleEx(
-            handle,
-            FileBasicInfo,
-            &mut info as *mut FILE_BASIC_INFO as *mut c_void,
-            infosize as u32,
-        ))?;
-        *info.ChangeTime.QuadPart()
-    };
-
-    Ok(tm)
-}
-
-pub fn query_access_information(handle: RawHandle) -> Result<AccessMode> {
+pub fn query_access_information(handle: RawHandle) -> io::Result<AccessMode> {
     let mut io_status_block = IO_STATUS_BLOCK::default();
     let mut info = FILE_ACCESS_INFORMATION::default();
 
@@ -403,7 +381,7 @@ pub fn query_access_information(handle: RawHandle) -> Result<AccessMode> {
         );
 
         if status != ntstatus::STATUS_SUCCESS {
-            return Err(Error::from_raw_os_error(
+            return Err(io::Error::from_raw_os_error(
                 RtlNtStatusToDosError(status) as i32
             ));
         }
@@ -412,7 +390,7 @@ pub fn query_access_information(handle: RawHandle) -> Result<AccessMode> {
     Ok(AccessMode::from_bits_truncate(info.AccessFlags))
 }
 
-pub fn query_mode_information(handle: RawHandle) -> Result<FileModeInformation> {
+pub fn query_mode_information(handle: RawHandle) -> io::Result<FileModeInformation> {
     let mut io_status_block = IO_STATUS_BLOCK::default();
     let mut info = FILE_MODE_INFORMATION::default();
 
@@ -426,7 +404,7 @@ pub fn query_mode_information(handle: RawHandle) -> Result<FileModeInformation> 
         );
 
         if status != ntstatus::STATUS_SUCCESS {
-            return Err(Error::from_raw_os_error(
+            return Err(io::Error::from_raw_os_error(
                 RtlNtStatusToDosError(status) as i32
             ));
         }
@@ -435,7 +413,11 @@ pub fn query_mode_information(handle: RawHandle) -> Result<FileModeInformation> 
     Ok(FileModeInformation::from_bits_truncate(info.Mode))
 }
 
-pub fn reopen_file(handle: RawHandle, access_mode: AccessMode, flags: Flags) -> Result<RawHandle> {
+pub fn reopen_file(
+    handle: RawHandle,
+    access_mode: AccessMode,
+    flags: Flags,
+) -> io::Result<RawHandle> {
     // Files on Windows are opened with DELETE, READ, and WRITE share mode by default (see OpenOptions in stdlib)
     // This keeps the same share mode when reopening the file handle
     let new_handle = unsafe {
@@ -448,7 +430,7 @@ pub fn reopen_file(handle: RawHandle, access_mode: AccessMode, flags: Flags) -> 
     };
 
     if new_handle == winapi::um::handleapi::INVALID_HANDLE_VALUE {
-        return Err(Error::last_os_error());
+        return Err(io::Error::last_os_error());
     }
 
     Ok(new_handle)

@@ -5,7 +5,6 @@
     unstable_features
 )]
 #![warn(unused_import_braces)]
-#![cfg_attr(feature = "clippy", plugin(clippy(conf_file = "../clippy.toml")))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::new_without_default))]
 #![cfg_attr(
     feature = "cargo-clippy",
@@ -20,6 +19,7 @@
 )]
 #![cfg(windows)]
 
+mod cvt;
 pub mod file;
 mod ntdll;
 pub mod time;

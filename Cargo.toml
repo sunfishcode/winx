@@ -10,20 +10,14 @@ edition = "2018"
 
 [dependencies]
 bitflags = "1.0"
-cvt = "0.1"
 winapi = { version = "^0.3", features = [
     "std",
-    "errhandlingapi",
     "handleapi",
-    "processthreadsapi",
     "profileapi",
-    "securitybaseapi",
     "winbase",
     "winerror",
-    "ws2def",
     "fileapi",
-    "aclapi",
 ] }
 
 [badges]
-maintenance = { status = "actively-developed" }
+maintenance = { status = "passively-maintained" }
