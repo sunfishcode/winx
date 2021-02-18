@@ -16,7 +16,6 @@ winapi = { version = "^0.3", features = [
     "profileapi",
     "winbase",
     "winerror",
-    "fileapi",
 ] }
 
 [badges]
