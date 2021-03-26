@@ -9,9 +9,9 @@ use bitflags::bitflags;
 use std::ffi::{c_void, OsString};
 use std::fs::File;
 use std::io;
-use std::ptr;
-use std::path::{Path, PathBuf};
 use std::os::windows::prelude::{AsRawHandle, OsStringExt, RawHandle};
+use std::path::{Path, PathBuf};
+use std::ptr;
 use winapi::shared::{
     minwindef::{self, DWORD},
     ntstatus, winerror,
@@ -197,8 +197,8 @@ pub fn get_file_path(file: &File) -> io::Result<PathBuf> {
 }
 
 pub fn get_full_path(path: &Path) -> io::Result<PathBuf> {
-    use winapi::um::fileapi::GetFullPathNameW;
     use std::os::windows::ffi::OsStrExt;
+    use winapi::um::fileapi::GetFullPathNameW;
 
     let mut wide = path.as_os_str().encode_wide().collect::<Vec<_>>();
     wide.push(0);
