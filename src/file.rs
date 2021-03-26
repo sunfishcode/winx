@@ -9,6 +9,8 @@ use bitflags::bitflags;
 use std::ffi::{c_void, OsString};
 use std::fs::File;
 use std::io;
+use std::ptr;
+use std::path::{Path, PathBuf};
 use std::os::windows::prelude::{AsRawHandle, OsStringExt, RawHandle};
 use winapi::shared::{
     minwindef::{self, DWORD},
@@ -174,7 +176,7 @@ bitflags! {
     }
 }
 
-pub fn get_file_path(file: &File) -> io::Result<OsString> {
+pub fn get_file_path(file: &File) -> io::Result<PathBuf> {
     use winapi::um::fileapi::GetFinalPathNameByHandleW;
 
     let mut raw_path: Vec<u16> = vec![0; WIDE_MAX_PATH as usize];
@@ -191,7 +193,39 @@ pub fn get_file_path(file: &File) -> io::Result<OsString> {
             winerror::ERROR_BUFFER_OVERFLOW as i32,
         ))?;
 
-    Ok(OsString::from_wide(written_bytes))
+    Ok(PathBuf::from(OsString::from_wide(written_bytes)))
+}
+
+pub fn get_full_path(path: &Path) -> io::Result<PathBuf> {
+    use winapi::um::fileapi::GetFullPathNameW;
+    use std::os::windows::ffi::OsStrExt;
+
+    let mut wide = path.as_os_str().encode_wide().collect::<Vec<_>>();
+    wide.push(0);
+
+    let mut raw_path: Vec<u16> = vec![0; WIDE_MAX_PATH as usize];
+
+    let read_len = cvt(unsafe {
+        GetFullPathNameW(
+            wide.as_ptr(),
+            WIDE_MAX_PATH,
+            raw_path.as_mut_ptr(),
+            ptr::null_mut(),
+        )
+    })?;
+    if read_len == 0 {
+        return Err(io::Error::last_os_error());
+    }
+
+    // obtain a slice containing the written bytes, and check for it being too long
+    // (practically probably impossible)
+    let written_bytes = raw_path
+        .get(..read_len as usize)
+        .ok_or(io::Error::from_raw_os_error(
+            winerror::ERROR_BUFFER_OVERFLOW as i32,
+        ))?;
+
+    Ok(PathBuf::from(OsString::from_wide(written_bytes)))
 }
 
 pub fn query_access_information(handle: RawHandle) -> io::Result<AccessMode> {
