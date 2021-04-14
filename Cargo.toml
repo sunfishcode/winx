@@ -13,9 +13,11 @@ bitflags = "1.0"
 winapi = { version = "^0.3", features = [
     "std",
     "handleapi",
+    "ioapiset",
     "profileapi",
     "winbase",
     "winerror",
+    "winioctl",
 ] }
 
 [badges]

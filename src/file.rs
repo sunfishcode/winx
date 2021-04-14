@@ -12,24 +12,70 @@ use std::{
     ffi::{c_void, OsString},
     fs::File,
     io,
-    os::windows::prelude::{AsRawHandle, OsStringExt, RawHandle},
+    os::windows::{
+        io::FromRawHandle,
+        prelude::{AsRawHandle, OsStringExt, RawHandle},
+    },
     path::{Path, PathBuf},
-    ptr,
+    ptr, slice,
 };
 use winapi::{
-    shared::{
-        minwindef::{self, DWORD},
-        ntstatus, winerror,
+    shared::{minwindef::DWORD, ntstatus, winerror},
+    um::{
+        ioapiset::DeviceIoControl,
+        winbase,
+        winioctl::FSCTL_GET_REPARSE_POINT,
+        winnt,
+        winnt::{IO_REPARSE_TAG_MOUNT_POINT, IO_REPARSE_TAG_SYMLINK, WCHAR},
     },
-    um::{winbase, winnt},
 };
 
 /// Maximum total path length for Unicode in Windows.
 /// [Maximum path length limitation]: https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file#maximum-path-length-limitation
 const WIDE_MAX_PATH: DWORD = 0x7fff;
 
+#[allow(non_snake_case)]
+mod c {
+    use super::*;
+    use winapi::ctypes::*;
+
+    // Interfaces derived from Rust's
+    // library/std/src/sys/windows/c.rs at revision
+    // 108e90ca78f052c0c1c49c42a22c85620be19712.
+
+    #[repr(C)]
+    pub(super) struct REPARSE_DATA_BUFFER {
+        pub(super) ReparseTag: c_uint,
+        pub(super) ReparseDataLength: c_ushort,
+        pub(super) Reserved: c_ushort,
+        pub(super) rest: (),
+    }
+
+    #[repr(C)]
+    pub(super) struct SYMBOLIC_LINK_REPARSE_BUFFER {
+        pub(super) SubstituteNameOffset: c_ushort,
+        pub(super) SubstituteNameLength: c_ushort,
+        pub(super) PrintNameOffset: c_ushort,
+        pub(super) PrintNameLength: c_ushort,
+        pub(super) Flags: c_ulong,
+        pub(super) PathBuffer: WCHAR,
+    }
+
+    #[repr(C)]
+    pub struct MOUNT_POINT_REPARSE_BUFFER {
+        pub(super) SubstituteNameOffset: c_ushort,
+        pub(super) SubstituteNameLength: c_ushort,
+        pub(super) PrintNameOffset: c_ushort,
+        pub(super) PrintNameLength: c_ushort,
+        pub(super) PathBuffer: WCHAR,
+    }
+
+    pub(super) const SYMLINK_FLAG_RELATIVE: DWORD = 0x00000001;
+    pub(super) const MAXIMUM_REPARSE_DATA_BUFFER_SIZE: usize = 16 * 1024;
+}
+
 bitflags! {
-    pub struct Flags: minwindef::DWORD {
+    pub struct Flags: DWORD {
         /// The file is being opened or created for a backup or restore operation.
         /// The system ensures that the calling process overrides file security checks when the process has SE_BACKUP_NAME and SE_RESTORE_NAME privileges.
         /// You must set this flag to obtain a handle to a directory. A directory handle can be passed to some functions instead of a file handle.
@@ -79,7 +125,7 @@ bitflags! {
 
 bitflags! {
     /// [Access mask]: https://docs.microsoft.com/en-us/windows/desktop/SecAuthZ/access-mask
-    pub struct AccessMode: minwindef::DWORD {
+    pub struct AccessMode: DWORD {
         /// For a file object, the right to read the corresponding file data.
         /// For a directory object, the right to read the corresponding directory data.
         const FILE_READ_DATA = winnt::FILE_READ_DATA;
@@ -159,7 +205,7 @@ bitflags! {
 
 bitflags! {
     // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-fscc/52df7798-8330-474b-ac31-9afe8075640c
-    pub struct FileModeInformation: minwindef::DWORD {
+    pub struct FileModeInformation: DWORD {
         /// When set, any system services, file system drivers (FSDs), and drivers that write data to
         /// the file are required to actually transfer the data into the file before any requested write
         /// operation is considered complete.
@@ -297,4 +343,72 @@ pub fn reopen_file(handle: RawHandle, access_mode: AccessMode, flags: Flags) -> 
     }
 
     Ok(unsafe { File::from_raw_handle(new_handle) })
+}
+
+// Implementation derived from Rust's
+// library/std/src/sys/windows/fs.rs at revision
+// 108e90ca78f052c0c1c49c42a22c85620be19712.
+
+pub fn read_link(file: &File) -> io::Result<PathBuf> {
+    let mut space = [0_u8; c::MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+    let (_bytes, buf) = reparse_point(file, &mut space)?;
+    unsafe {
+        let (path_buffer, subst_off, subst_len, relative) = match buf.ReparseTag {
+            IO_REPARSE_TAG_SYMLINK => {
+                let info: *const c::SYMBOLIC_LINK_REPARSE_BUFFER =
+                    &buf.rest as *const _ as *const _;
+                (
+                    &(*info).PathBuffer as *const _ as *const u16,
+                    (*info).SubstituteNameOffset / 2,
+                    (*info).SubstituteNameLength / 2,
+                    (*info).Flags & c::SYMLINK_FLAG_RELATIVE != 0,
+                )
+            }
+            IO_REPARSE_TAG_MOUNT_POINT => {
+                let info: *const c::MOUNT_POINT_REPARSE_BUFFER = &buf.rest as *const _ as *const _;
+                (
+                    &(*info).PathBuffer as *const _ as *const u16,
+                    (*info).SubstituteNameOffset / 2,
+                    (*info).SubstituteNameLength / 2,
+                    false,
+                )
+            }
+            _ => {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    "Unsupported reparse point type",
+                ));
+            }
+        };
+        let subst_ptr = path_buffer.offset(subst_off as isize);
+        let mut subst = slice::from_raw_parts(subst_ptr, subst_len as usize);
+        // Absolute paths start with an NT internal namespace prefix `\??\`
+        // We should not let it leak through.
+        if !relative && subst.starts_with(&[92u16, 63u16, 63u16, 92u16]) {
+            subst = &subst[4..];
+        }
+        Ok(PathBuf::from(OsString::from_wide(subst)))
+    }
+}
+
+fn reparse_point<'a>(
+    file: &File,
+    space: &'a mut [u8; c::MAXIMUM_REPARSE_DATA_BUFFER_SIZE],
+) -> io::Result<(DWORD, &'a c::REPARSE_DATA_BUFFER)> {
+    unsafe {
+        let mut bytes = 0;
+        cvt({
+            DeviceIoControl(
+                file.as_raw_handle(),
+                FSCTL_GET_REPARSE_POINT,
+                ptr::null_mut(),
+                0,
+                space.as_mut_ptr() as *mut _,
+                space.len() as DWORD,
+                &mut bytes,
+                ptr::null_mut(),
+            )
+        })?;
+        Ok((bytes, &*(space.as_ptr() as *const c::REPARSE_DATA_BUFFER)))
+    }
 }
