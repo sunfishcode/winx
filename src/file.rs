@@ -1,22 +1,28 @@
 #![allow(non_camel_case_types)]
 
-use crate::cvt::cvt;
-use crate::ntdll::{
-    NtQueryInformationFile, RtlNtStatusToDosError, FILE_ACCESS_INFORMATION, FILE_INFORMATION_CLASS,
-    FILE_MODE_INFORMATION, IO_STATUS_BLOCK,
+use crate::{
+    cvt::cvt,
+    ntdll::{
+        NtQueryInformationFile, RtlNtStatusToDosError, FILE_ACCESS_INFORMATION,
+        FILE_INFORMATION_CLASS, FILE_MODE_INFORMATION, IO_STATUS_BLOCK,
+    },
 };
 use bitflags::bitflags;
-use std::ffi::{c_void, OsString};
-use std::fs::File;
-use std::io;
-use std::os::windows::prelude::{AsRawHandle, OsStringExt, RawHandle};
-use std::path::{Path, PathBuf};
-use std::ptr;
-use winapi::shared::{
-    minwindef::{self, DWORD},
-    ntstatus, winerror,
+use std::{
+    ffi::{c_void, OsString},
+    fs::File,
+    io,
+    os::windows::prelude::{AsRawHandle, OsStringExt, RawHandle},
+    path::{Path, PathBuf},
+    ptr,
 };
-use winapi::um::{winbase, winnt};
+use winapi::{
+    shared::{
+        minwindef::{self, DWORD},
+        ntstatus, winerror,
+    },
+    um::{winbase, winnt},
+};
 
 /// Maximum total path length for Unicode in Windows.
 /// [Maximum path length limitation]: https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file#maximum-path-length-limitation
