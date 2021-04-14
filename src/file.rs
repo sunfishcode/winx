@@ -274,11 +274,7 @@ pub fn query_mode_information(handle: RawHandle) -> io::Result<FileModeInformati
     Ok(FileModeInformation::from_bits_truncate(info.Mode))
 }
 
-pub fn reopen_file(
-    handle: RawHandle,
-    access_mode: AccessMode,
-    flags: Flags,
-) -> io::Result<RawHandle> {
+pub fn reopen_file(handle: RawHandle, access_mode: AccessMode, flags: Flags) -> io::Result<File> {
     // Files on Windows are opened with DELETE, READ, and WRITE share mode by default (see OpenOptions in stdlib)
     // This keeps the same share mode when reopening the file handle
     let new_handle = unsafe {
@@ -294,5 +290,5 @@ pub fn reopen_file(
         return Err(io::Error::last_os_error());
     }
 
-    Ok(new_handle)
+    Ok(unsafe { File::from_raw_handle(new_handle) })
 }
