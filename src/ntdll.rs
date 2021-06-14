@@ -3,9 +3,10 @@
 
 #![allow(nonstandard_style)]
 
+use io_lifetimes::BorrowedHandle;
 use std::{
     ffi::c_void,
-    os::{raw::c_ulong, windows::prelude::RawHandle},
+    os::raw::c_ulong,
     sync::atomic::{AtomicUsize, Ordering},
 };
 use winapi::{
@@ -84,7 +85,7 @@ macro_rules! ntdll_import {
 ntdll_import! {
     // https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-ntqueryinformationfile
     fn NtQueryInformationFile(
-        FileHandle: RawHandle,
+        FileHandle: BorrowedHandle<'_>,
         IoStatusBlock: *mut IO_STATUS_BLOCK,
         FileInformation: *mut c_void,
         Length: c_ulong,

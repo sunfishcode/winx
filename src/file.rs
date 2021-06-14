@@ -8,13 +8,14 @@ use crate::{
     },
 };
 use bitflags::bitflags;
+use io_lifetimes::BorrowedHandle;
 use std::{
     ffi::{c_void, OsString},
     fs::File,
     io,
     os::windows::{
         io::FromRawHandle,
-        prelude::{AsRawHandle, OsStringExt, RawHandle},
+        prelude::{AsRawHandle, OsStringExt},
     },
     path::{Path, PathBuf},
     ptr, slice,
@@ -280,7 +281,7 @@ pub fn get_full_path(path: &Path) -> io::Result<PathBuf> {
     Ok(PathBuf::from(OsString::from_wide(written_bytes)))
 }
 
-pub fn query_access_information(handle: RawHandle) -> io::Result<AccessMode> {
+pub fn query_access_information(handle: BorrowedHandle<'_>) -> io::Result<AccessMode> {
     let mut io_status_block = IO_STATUS_BLOCK::default();
     let mut info = FILE_ACCESS_INFORMATION::default();
 
@@ -303,7 +304,7 @@ pub fn query_access_information(handle: RawHandle) -> io::Result<AccessMode> {
     Ok(AccessMode::from_bits_truncate(info.AccessFlags))
 }
 
-pub fn query_mode_information(handle: RawHandle) -> io::Result<FileModeInformation> {
+pub fn query_mode_information(handle: BorrowedHandle<'_>) -> io::Result<FileModeInformation> {
     let mut io_status_block = IO_STATUS_BLOCK::default();
     let mut info = FILE_MODE_INFORMATION::default();
 
@@ -326,12 +327,16 @@ pub fn query_mode_information(handle: RawHandle) -> io::Result<FileModeInformati
     Ok(FileModeInformation::from_bits_truncate(info.Mode))
 }
 
-pub fn reopen_file(handle: RawHandle, access_mode: AccessMode, flags: Flags) -> io::Result<File> {
+pub fn reopen_file(
+    handle: BorrowedHandle<'_>,
+    access_mode: AccessMode,
+    flags: Flags,
+) -> io::Result<File> {
     // Files on Windows are opened with DELETE, READ, and WRITE share mode by default (see OpenOptions in stdlib)
     // This keeps the same share mode when reopening the file handle
     let new_handle = unsafe {
         winbase::ReOpenFile(
-            handle,
+            handle.as_raw_handle(),
             access_mode.bits(),
             winnt::FILE_SHARE_DELETE | winnt::FILE_SHARE_READ | winnt::FILE_SHARE_WRITE,
             flags.bits(),

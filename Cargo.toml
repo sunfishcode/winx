@@ -10,6 +10,7 @@ edition = "2018"
 
 [dependencies]
 bitflags = "1.0"
+io-lifetimes = "0.1.1"
 winapi = { version = "^0.3", features = [
     "std",
     "handleapi",
