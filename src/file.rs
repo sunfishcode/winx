@@ -1,35 +1,24 @@
 #![allow(non_camel_case_types)]
 
-use crate::{
-    cvt::cvt,
-    ntdll::{
-        NtQueryInformationFile, RtlNtStatusToDosError, FILE_ACCESS_INFORMATION,
-        FILE_INFORMATION_CLASS, FILE_MODE_INFORMATION, IO_STATUS_BLOCK,
-    },
+use crate::cvt::cvt;
+use crate::ntdll::{
+    NtQueryInformationFile, RtlNtStatusToDosError, FILE_ACCESS_INFORMATION, FILE_INFORMATION_CLASS,
+    FILE_MODE_INFORMATION, IO_STATUS_BLOCK,
 };
 use bitflags::bitflags;
 use io_lifetimes::BorrowedHandle;
-use std::{
-    ffi::{c_void, OsString},
-    fs::File,
-    io,
-    os::windows::{
-        io::FromRawHandle,
-        prelude::{AsRawHandle, OsStringExt},
-    },
-    path::{Path, PathBuf},
-    ptr, slice,
-};
-use winapi::{
-    shared::{minwindef::DWORD, ntstatus, winerror},
-    um::{
-        ioapiset::DeviceIoControl,
-        winbase,
-        winioctl::FSCTL_GET_REPARSE_POINT,
-        winnt,
-        winnt::{IO_REPARSE_TAG_MOUNT_POINT, IO_REPARSE_TAG_SYMLINK, WCHAR},
-    },
-};
+use std::ffi::{c_void, OsString};
+use std::fs::File;
+use std::os::windows::io::FromRawHandle;
+use std::os::windows::prelude::{AsRawHandle, OsStringExt};
+use std::path::{Path, PathBuf};
+use std::{io, ptr, slice};
+use winapi::shared::minwindef::DWORD;
+use winapi::shared::{ntstatus, winerror};
+use winapi::um::ioapiset::DeviceIoControl;
+use winapi::um::winioctl::FSCTL_GET_REPARSE_POINT;
+use winapi::um::winnt::{IO_REPARSE_TAG_MOUNT_POINT, IO_REPARSE_TAG_SYMLINK, WCHAR};
+use winapi::um::{winbase, winnt};
 
 /// Maximum total path length for Unicode in Windows.
 /// [Maximum path length limitation]: https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file#maximum-path-length-limitation
@@ -332,8 +321,9 @@ pub fn reopen_file(
     access_mode: AccessMode,
     flags: Flags,
 ) -> io::Result<File> {
-    // Files on Windows are opened with DELETE, READ, and WRITE share mode by default (see OpenOptions in stdlib)
-    // This keeps the same share mode when reopening the file handle
+    // Files on Windows are opened with DELETE, READ, and WRITE share mode by
+    // default (see OpenOptions in stdlib) This keeps the same share mode when
+    // reopening the file handle
     let new_handle = unsafe {
         winbase::ReOpenFile(
             handle.as_raw_handle(),

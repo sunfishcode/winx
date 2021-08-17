@@ -4,18 +4,12 @@
 #![allow(nonstandard_style)]
 
 use io_lifetimes::BorrowedHandle;
-use std::{
-    ffi::c_void,
-    os::raw::c_ulong,
-    sync::atomic::{AtomicUsize, Ordering},
-};
-use winapi::{
-    shared::ntdef::NTSTATUS,
-    um::{
-        libloaderapi::{GetModuleHandleA, GetProcAddress},
-        winnt::ACCESS_MASK,
-    },
-};
+use std::ffi::c_void;
+use std::os::raw::c_ulong;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use winapi::shared::ntdef::NTSTATUS;
+use winapi::um::libloaderapi::{GetModuleHandleA, GetProcAddress};
+use winapi::um::winnt::ACCESS_MASK;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
