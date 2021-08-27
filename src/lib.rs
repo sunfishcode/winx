@@ -18,6 +18,7 @@
     )
 )]
 #![cfg(windows)]
+#![cfg_attr(io_lifetimes_use_std, feature(io_safety))]
 
 mod cvt;
 pub mod file;
