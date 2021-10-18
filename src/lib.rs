@@ -20,6 +20,10 @@
 #![cfg(windows)]
 #![cfg_attr(io_lifetimes_use_std, feature(io_safety))]
 
+/// Re-export `io_lifetimes` since we use its types in our public API, so
+/// that our users don't need to do anything special to use the same version.
+pub use io_lifetimes;
+
 mod cvt;
 pub mod file;
 mod ntdll;
