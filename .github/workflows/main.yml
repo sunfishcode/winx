@@ -24,13 +24,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build: [windows, windows-2016]
+        build: [windows, windows-2019]
         include:
           - build: windows
             os: windows-latest
             rust: stable
-          - build: windows-2016
-            os: windows-2016
+          - build: windows-2019
+            os: windows-2019
             rust: stable
 
     steps:
