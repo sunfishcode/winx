@@ -14,18 +14,18 @@ edition = "2018"
 [dependencies]
 bitflags = "1.0"
 io-lifetimes = { version = "0.6.0", default-features = false }
-winapi = { version = "^0.3", features = [
-    "std",
-    "handleapi",
-    "ioapiset",
-    "profileapi",
-    "winbase",
-    "winerror",
-    "winioctl",
-] }
 
-[badges]
-maintenance = { status = "passively-maintained" }
+[target.'cfg(windows)'.dependencies.windows-sys]
+version = "0.36.0"
+features = [
+    "Win32_Foundation",
+    "Win32_Storage_FileSystem",
+    "Win32_System_IO",
+    "Win32_System_Ioctl",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Performance",
+    "Win32_System_SystemServices",
+]
 
 [package.metadata.docs.rs]
 targets = ["x86_64-pc-windows-msvc", "i686-pc-windows-msvc"]

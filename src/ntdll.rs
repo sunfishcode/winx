@@ -1,5 +1,5 @@
 //! Module for importing functions from ntdll.dll.
-//! The winapi crate does not expose these Windows API functions.
+//! The windows-sys crate does not expose these Windows API functions.
 
 #![allow(nonstandard_style)]
 
@@ -7,9 +7,11 @@ use io_lifetimes::BorrowedHandle;
 use std::ffi::c_void;
 use std::os::raw::c_ulong;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use winapi::shared::ntdef::NTSTATUS;
-use winapi::um::libloaderapi::{GetModuleHandleA, GetProcAddress};
-use winapi::um::winnt::ACCESS_MASK;
+use windows_sys::Win32::Foundation::NTSTATUS;
+use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
+
+// https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/access-mask
+type ACCESS_MASK = u32;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -57,11 +59,11 @@ macro_rules! ntdll_import {
             static ADDRESS: AtomicUsize = AtomicUsize::new(0);
             let address = match ADDRESS.load(Ordering::Relaxed) {
                 0 => {
-                    let ntdll = GetModuleHandleA("ntdll\0".as_ptr() as *const i8);
-                    let address = GetProcAddress(
+                    let ntdll = GetModuleHandleA("ntdll\0".as_ptr() as *const u8);
+                    let address: usize = std::mem::transmute(GetProcAddress(
                         ntdll,
-                        concat!(stringify!($name), "\0").as_ptr() as *const i8,
-                    ) as usize;
+                        concat!(stringify!($name), "\0").as_ptr() as *const u8,
+                    ));
                     assert!(address != 0);
                     ADDRESS.store(address, Ordering::Relaxed);
                     address
