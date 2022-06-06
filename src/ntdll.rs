@@ -63,8 +63,7 @@ macro_rules! ntdll_import {
                     let address: usize = std::mem::transmute(GetProcAddress(
                         ntdll,
                         concat!(stringify!($name), "\0").as_ptr() as *const u8,
-                    ));
-                    assert!(address != 0);
+                    ).unwrap());
                     ADDRESS.store(address, Ordering::Relaxed);
                     address
                 }
