@@ -25,6 +25,7 @@ features = [
     "Win32_System_LibraryLoader",
     "Win32_System_Performance",
     "Win32_System_SystemServices",
+    "Win32_System_WindowsProgramming",
 ]
 
 [package.metadata.docs.rs]
