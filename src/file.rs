@@ -153,7 +153,7 @@ bitflags! {
         /// The right to write file attributes.
         const FILE_WRITE_ATTRIBUTES = FileSystem::FILE_WRITE_ATTRIBUTES;
         /// The right to delete the object.
-        const DELETE = SystemServices::DELETE;
+        const DELETE = FileSystem::DELETE;
         /// The right to read the information in the object's security descriptor,
         /// not including the information in the system access control list (SACL).
         const READ_CONTROL = FileSystem::READ_CONTROL;
@@ -163,9 +163,9 @@ bitflags! {
         const SYNCHRONIZE = FileSystem::SYNCHRONIZE;
         /// The right to modify the discretionary access control list (DACL) in
         /// the object's security descriptor.
-        const WRITE_DAC = SystemServices::WRITE_DAC;
+        const WRITE_DAC = FileSystem::WRITE_DAC;
         /// The right to change the owner in the object's security descriptor.
-        const WRITE_OWNER = SystemServices::WRITE_OWNER;
+        const WRITE_OWNER = FileSystem::WRITE_OWNER;
         /// It is used to indicate access to a system access control list (SACL).
         const ACCESS_SYSTEM_SECURITY = SystemServices::ACCESS_SYSTEM_SECURITY;
         /// Maximum allowed.
