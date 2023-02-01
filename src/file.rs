@@ -2,8 +2,7 @@
 
 use crate::cvt::cvt;
 use crate::ntdll::{
-    NtQueryInformationFile, RtlNtStatusToDosError, FILE_ACCESS_INFORMATION, FILE_INFORMATION_CLASS,
-    FILE_MODE_INFORMATION, IO_STATUS_BLOCK,
+    NtQueryInformationFile, FILE_ACCESS_INFORMATION, FILE_INFORMATION_CLASS, FILE_MODE_INFORMATION,
 };
 use bitflags::bitflags;
 use io_lifetimes::BorrowedHandle;
@@ -12,15 +11,16 @@ use std::fs::File;
 use std::os::windows::ffi::OsStringExt;
 use std::os::windows::io::{AsRawHandle, FromRawHandle, RawHandle};
 use std::path::{Path, PathBuf};
-use std::{io, ptr, slice};
+use std::{io, mem, ptr, slice};
 use windows_sys::Win32::Foundation::{
-    ERROR_BUFFER_OVERFLOW, HANDLE, INVALID_HANDLE_VALUE, STATUS_SUCCESS,
+    RtlNtStatusToDosError, ERROR_BUFFER_OVERFLOW, HANDLE, INVALID_HANDLE_VALUE, STATUS_SUCCESS,
 };
 use windows_sys::Win32::Storage::FileSystem::{self, GetFinalPathNameByHandleW, GetFullPathNameW};
 use windows_sys::Win32::System::Ioctl::FSCTL_GET_REPARSE_POINT;
 use windows_sys::Win32::System::SystemServices::{
     self, IO_REPARSE_TAG_MOUNT_POINT, IO_REPARSE_TAG_SYMLINK,
 };
+use windows_sys::Win32::System::WindowsProgramming::IO_STATUS_BLOCK;
 use windows_sys::Win32::System::IO::DeviceIoControl;
 
 /// Maximum total path length for Unicode in Windows.
@@ -268,10 +268,10 @@ pub fn get_full_path(path: &Path) -> io::Result<PathBuf> {
 }
 
 pub fn query_access_information(handle: BorrowedHandle<'_>) -> io::Result<AccessMode> {
-    let mut io_status_block = IO_STATUS_BLOCK::default();
-    let mut info = FILE_ACCESS_INFORMATION::default();
-
     unsafe {
+        let mut io_status_block = mem::zeroed::<IO_STATUS_BLOCK>();
+        let mut info = FILE_ACCESS_INFORMATION::default();
+
         let status = NtQueryInformationFile(
             handle,
             &mut io_status_block,
@@ -285,16 +285,16 @@ pub fn query_access_information(handle: BorrowedHandle<'_>) -> io::Result<Access
                 RtlNtStatusToDosError(status) as i32
             ));
         }
-    }
 
-    Ok(AccessMode::from_bits_truncate(info.AccessFlags))
+        Ok(AccessMode::from_bits_truncate(info.AccessFlags))
+    }
 }
 
 pub fn query_mode_information(handle: BorrowedHandle<'_>) -> io::Result<FileModeInformation> {
-    let mut io_status_block = IO_STATUS_BLOCK::default();
-    let mut info = FILE_MODE_INFORMATION::default();
-
     unsafe {
+        let mut io_status_block = mem::zeroed::<IO_STATUS_BLOCK>();
+        let mut info = FILE_MODE_INFORMATION::default();
+
         let status = NtQueryInformationFile(
             handle,
             &mut io_status_block,
@@ -308,9 +308,9 @@ pub fn query_mode_information(handle: BorrowedHandle<'_>) -> io::Result<FileMode
                 RtlNtStatusToDosError(status) as i32
             ));
         }
-    }
 
-    Ok(FileModeInformation::from_bits_truncate(info.Mode))
+        Ok(FileModeInformation::from_bits_truncate(info.Mode))
+    }
 }
 
 pub fn reopen_file(

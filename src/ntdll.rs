@@ -9,6 +9,7 @@ use std::os::raw::c_ulong;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use windows_sys::Win32::Foundation::NTSTATUS;
 use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
+use windows_sys::Win32::System::WindowsProgramming::IO_STATUS_BLOCK;
 
 // https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/access-mask
 type ACCESS_MASK = u32;
@@ -21,20 +22,6 @@ pub(crate) enum FILE_INFORMATION_CLASS {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
-pub(crate) union IO_STATUS_BLOCK_u {
-    pub Status: NTSTATUS,
-    pub Pointer: *mut c_void,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub(crate) struct IO_STATUS_BLOCK {
-    pub u: IO_STATUS_BLOCK_u,
-    pub Information: *mut c_void,
-}
-
-#[repr(C)]
 #[derive(Copy, Clone, Default)]
 pub(crate) struct FILE_ACCESS_INFORMATION {
     pub AccessFlags: ACCESS_MASK,
@@ -44,13 +31,6 @@ pub(crate) struct FILE_ACCESS_INFORMATION {
 #[derive(Copy, Clone, Default)]
 pub(crate) struct FILE_MODE_INFORMATION {
     pub Mode: c_ulong,
-}
-
-impl Default for IO_STATUS_BLOCK {
-    #[inline]
-    fn default() -> Self {
-        unsafe { std::mem::zeroed() }
-    }
 }
 
 macro_rules! ntdll_import {
@@ -86,6 +66,4 @@ ntdll_import! {
         Length: c_ulong,
         FileInformationClass: FILE_INFORMATION_CLASS
     ) -> NTSTATUS;
-    // https://docs.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-rtlntstatustodoserror
-    fn RtlNtStatusToDosError(status: NTSTATUS) -> c_ulong;
 }
