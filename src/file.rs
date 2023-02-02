@@ -197,6 +197,18 @@ bitflags! {
 }
 
 bitflags! {
+    /// The Windows sharing mode.
+    pub struct ShareMode: u32 {
+        /// Permits other users of a file to read it.
+        const FILE_SHARE_READ = FileSystem::FILE_SHARE_READ;
+        /// Permits other users of a file to write to it.
+        const FILE_SHARE_WRITE = FileSystem::FILE_SHARE_WRITE;
+        /// Permits other users of a file to delete it.
+        const FILE_SHARE_DELETE = FileSystem::FILE_SHARE_DELETE;
+    }
+}
+
+bitflags! {
     // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-fscc/52df7798-8330-474b-ac31-9afe8075640c
     pub struct FileModeInformation: u32 {
         /// When set, any system services, file system drivers (FSDs), and drivers that write data to
@@ -316,6 +328,7 @@ pub fn query_mode_information(handle: BorrowedHandle<'_>) -> io::Result<FileMode
 pub fn reopen_file(
     handle: BorrowedHandle<'_>,
     access_mode: AccessMode,
+    share_mode: ShareMode,
     flags: Flags,
 ) -> io::Result<File> {
     // Files on Windows are opened with DELETE, READ, and WRITE share mode by
@@ -325,9 +338,7 @@ pub fn reopen_file(
         FileSystem::ReOpenFile(
             handle.as_raw_handle() as HANDLE,
             access_mode.bits(),
-            FileSystem::FILE_SHARE_DELETE
-                | FileSystem::FILE_SHARE_READ
-                | FileSystem::FILE_SHARE_WRITE,
+            share_mode.bits(),
             flags.bits(),
         )
     };
