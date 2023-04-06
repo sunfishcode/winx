@@ -13,7 +13,8 @@ use std::os::windows::io::{AsRawHandle, FromRawHandle, RawHandle};
 use std::path::{Path, PathBuf};
 use std::{io, mem, ptr, slice};
 use windows_sys::Win32::Foundation::{
-    RtlNtStatusToDosError, ERROR_BUFFER_OVERFLOW, HANDLE, INVALID_HANDLE_VALUE, STATUS_SUCCESS,
+    self, RtlNtStatusToDosError, ERROR_BUFFER_OVERFLOW, HANDLE, INVALID_HANDLE_VALUE,
+    STATUS_SUCCESS,
 };
 use windows_sys::Win32::Storage::FileSystem::{self, GetFinalPathNameByHandleW, GetFullPathNameW};
 use windows_sys::Win32::System::Ioctl::FSCTL_GET_REPARSE_POINT;
@@ -176,15 +177,15 @@ bitflags! {
         const RESERVED2 = 0x8000000;
         /// Provides all possible access rights.
         /// This is convenience flag which is translated by the OS into actual [`FILE_GENERIC_ALL`] union.
-        const GENERIC_ALL = SystemServices::GENERIC_ALL;
+        const GENERIC_ALL = Foundation::GENERIC_ALL;
         /// Provides execute access.
-        const GENERIC_EXECUTE = SystemServices::GENERIC_EXECUTE;
+        const GENERIC_EXECUTE = Foundation::GENERIC_EXECUTE;
         /// Provides write access.
         /// This is convenience flag which is translated by the OS into actual [`FILE_GENERIC_WRITE`] union.
-        const GENERIC_WRITE = SystemServices::GENERIC_WRITE;
+        const GENERIC_WRITE = Foundation::GENERIC_WRITE;
         /// Provides read access.
         /// This is convenience flag which is translated by the OS into actual [`FILE_GENERIC_READ`] union.
-        const GENERIC_READ = SystemServices::GENERIC_READ;
+        const GENERIC_READ = Foundation::GENERIC_READ;
         /// Provides read access.
         const FILE_GENERIC_READ = FileSystem::FILE_GENERIC_READ;
         /// Provides write access.
