@@ -5,10 +5,10 @@ use crate::ntdll::{
     NtQueryInformationFile, FILE_ACCESS_INFORMATION, FILE_INFORMATION_CLASS, FILE_MODE_INFORMATION,
 };
 use bitflags::bitflags;
-use io_lifetimes::BorrowedHandle;
 use std::ffi::{c_void, OsString};
 use std::fs::File;
 use std::os::windows::ffi::OsStringExt;
+use std::os::windows::io::BorrowedHandle;
 use std::os::windows::io::{AsRawHandle, FromRawHandle, RawHandle};
 use std::path::{Path, PathBuf};
 use std::{io, mem, ptr, slice};
