@@ -12,8 +12,7 @@ repository = "https://github.com/sunfishcode/winx"
 edition = "2018"
 
 [dependencies]
-bitflags = "1.0"
-io-lifetimes = { version = "1.0.0", default-features = false }
+bitflags = "2.0"
 
 [target.'cfg(windows)'.dependencies.windows-sys]
 version = "0.48.0"

@@ -3,9 +3,9 @@
 
 #![allow(nonstandard_style)]
 
-use io_lifetimes::BorrowedHandle;
 use std::ffi::c_void;
 use std::os::raw::c_ulong;
+use std::os::windows::io::BorrowedHandle;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use windows_sys::Win32::Foundation::NTSTATUS;
 use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
