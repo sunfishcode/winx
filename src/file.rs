@@ -69,6 +69,7 @@ mod c {
 }
 
 bitflags! {
+    #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
     pub struct Flags: u32 {
         /// The file is being opened or created for a backup or restore operation.
         /// The system ensures that the calling process overrides file security checks when the process has SE_BACKUP_NAME and SE_RESTORE_NAME privileges.
@@ -119,6 +120,7 @@ bitflags! {
 
 bitflags! {
     /// [Access mask]: https://docs.microsoft.com/en-us/windows/desktop/SecAuthZ/access-mask
+    #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
     pub struct AccessMode: u32 {
         /// For a file object, the right to read the corresponding file data.
         /// For a directory object, the right to read the corresponding directory data.
@@ -199,6 +201,7 @@ bitflags! {
 
 bitflags! {
     /// The Windows sharing mode.
+    #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
     pub struct ShareMode: u32 {
         /// Permits other users of a file to read it.
         const FILE_SHARE_READ = FileSystem::FILE_SHARE_READ;
@@ -211,6 +214,7 @@ bitflags! {
 
 bitflags! {
     // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-fscc/52df7798-8330-474b-ac31-9afe8075640c
+    #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
     pub struct FileModeInformation: u32 {
         /// When set, any system services, file system drivers (FSDs), and drivers that write data to
         /// the file are required to actually transfer the data into the file before any requested write
