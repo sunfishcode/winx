@@ -9,7 +9,7 @@ description = "Windows API helper library"
 documentation = "https://docs.rs/winx"
 license = "Apache-2.0 WITH LLVM-exception"
 repository = "https://github.com/sunfishcode/winx"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 bitflags = "2.0"
