@@ -11,9 +11,10 @@ license = "Apache-2.0 WITH LLVM-exception"
 repository = "https://github.com/sunfishcode/winx"
 edition = "2021"
 exclude = ["/.github"]
+rust-version = "1.63"
 
 [dependencies]
-bitflags = "2.0"
+bitflags = "2.4"
 
 [target.'cfg(windows)'.dependencies.windows-sys]
 version = "0.48.0"
