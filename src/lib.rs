@@ -13,7 +13,7 @@
         clippy::mut_mut,
         clippy::nonminimal_bool,
         clippy::map_unwrap_or,
-        clippy::clippy::unicode_not_nfc,
+        clippy::unicode_not_nfc,
         clippy::use_self
     )
 )]
