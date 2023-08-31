@@ -3,13 +3,14 @@ name = "winx"
 version = "0.36.1"
 authors = [
     "Jakub Konka <kubkon@jakubkonka.com>",
-    "Dan Gohman <dev@sunfishcode.online>"
+    "Dan Gohman <dev@sunfishcode.online>",
 ]
 description = "Windows API helper library"
 documentation = "https://docs.rs/winx"
 license = "Apache-2.0 WITH LLVM-exception"
 repository = "https://github.com/sunfishcode/winx"
 edition = "2021"
+exclude = ["/.github"]
 
 [dependencies]
 bitflags = "2.0"
