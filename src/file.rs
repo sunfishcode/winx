@@ -8,8 +8,7 @@ use bitflags::bitflags;
 use std::ffi::{c_void, OsString};
 use std::fs::File;
 use std::os::windows::ffi::OsStringExt;
-use std::os::windows::io::BorrowedHandle;
-use std::os::windows::io::{AsRawHandle, FromRawHandle, RawHandle};
+use std::os::windows::io::{AsRawHandle, BorrowedHandle, FromRawHandle, RawHandle};
 use std::path::{Path, PathBuf};
 use std::{io, mem, ptr, slice};
 use windows_sys::Win32::Foundation::{

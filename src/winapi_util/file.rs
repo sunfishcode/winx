@@ -3,13 +3,11 @@
 //!
 //! It is ported to windows_sys and io-lifetimes.
 
-use std::io;
-use std::mem;
 use std::os::windows::io::AsRawHandle;
+use std::{io, mem};
 
 use std::os::windows::io::AsHandle;
-use windows_sys::Win32::Foundation::HANDLE;
-use windows_sys::Win32::Foundation::{GetLastError, FILETIME, NO_ERROR};
+use windows_sys::Win32::Foundation::{GetLastError, FILETIME, HANDLE, NO_ERROR};
 use windows_sys::Win32::Storage::FileSystem::{
     GetFileInformationByHandle, GetFileType, BY_HANDLE_FILE_INFORMATION, FILE_ATTRIBUTE_HIDDEN,
 };
