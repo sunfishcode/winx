@@ -20,8 +20,7 @@ use windows_sys::Win32::System::Ioctl::FSCTL_GET_REPARSE_POINT;
 use windows_sys::Win32::System::SystemServices::{
     self, IO_REPARSE_TAG_MOUNT_POINT, IO_REPARSE_TAG_SYMLINK,
 };
-use windows_sys::Win32::System::WindowsProgramming::IO_STATUS_BLOCK;
-use windows_sys::Win32::System::IO::DeviceIoControl;
+use windows_sys::Win32::System::IO::{DeviceIoControl, IO_STATUS_BLOCK};
 
 /// Maximum total path length for Unicode in Windows.
 /// [Maximum path length limitation]: https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file#maximum-path-length-limitation
