@@ -9,7 +9,7 @@ use std::os::windows::io::BorrowedHandle;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use windows_sys::Win32::Foundation::NTSTATUS;
 use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
-use windows_sys::Win32::System::WindowsProgramming::IO_STATUS_BLOCK;
+use windows_sys::Win32::System::IO::IO_STATUS_BLOCK;
 
 // https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/access-mask
 type ACCESS_MASK = u32;

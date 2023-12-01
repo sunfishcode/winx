@@ -17,7 +17,7 @@ rust-version = "1.63"
 bitflags = "2.4"
 
 [target.'cfg(windows)'.dependencies.windows-sys]
-version = "0.48.0"
+version = "0.52.0"
 features = [
     "Win32_Foundation",
     "Win32_Storage_FileSystem",
@@ -26,7 +26,6 @@ features = [
     "Win32_System_LibraryLoader",
     "Win32_System_Performance",
     "Win32_System_SystemServices",
-    "Win32_System_WindowsProgramming",
 ]
 
 [package.metadata.docs.rs]
