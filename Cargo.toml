@@ -1,6 +1,6 @@
 [package]
 name = "winx"
-version = "0.36.3"
+version = "0.36.4"
 authors = [
     "Jakub Konka <kubkon@jakubkonka.com>",
     "Dan Gohman <dev@sunfishcode.online>",
