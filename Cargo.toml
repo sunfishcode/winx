@@ -17,7 +17,7 @@ rust-version = "1.63"
 bitflags = "2.4"
 
 [target.'cfg(windows)'.dependencies.windows-sys]
-version = "0.52.0"
+version = ">=0.52, <=0.59"
 features = [
     "Win32_Foundation",
     "Win32_Storage_FileSystem",
@@ -30,3 +30,9 @@ features = [
 
 [package.metadata.docs.rs]
 targets = ["x86_64-pc-windows-msvc", "i686-pc-windows-msvc"]
+
+[lints.rust.unexpected_cfgs]
+level = "warn"
+check-cfg = [
+    'cfg(feature, values("cargo-clippy"))',
+]
