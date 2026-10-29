@@ -17,7 +17,7 @@ rust-version = "1.63"
 bitflags = "2.4"
 
 [target.'cfg(windows)'.dependencies.windows-sys]
-version = ">=0.52, <=0.59"
+version = ">=0.52.0, <0.62.0"
 features = [
     "Win32_Foundation",
     "Win32_Storage_FileSystem",
